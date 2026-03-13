@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Financial Document Intelligence Tool</title>
+    <style>
+        body { font-family: Arial, sans-serif; max-width: 900px; margin: 40px auto; padding: 20px; background: #f4f4f4; }
+        h1 { color: #2c3e50; }
+        .section { background: white; padding: 20px; margin: 20px 0; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        input, button { padding: 10px; margin: 5px; border-radius: 4px; border: 1px solid #ccc; }
+        button { background: #2c3e50; color: white; border: none; cursor: pointer; }
+        button:hover { background: #34495e; }
+        .result { background: #ecf0f1; padding: 10px; margin: 5px 0; border-radius: 4px; }
+        .anomaly { background: #fadbd8; padding: 10px; margin: 5px 0; border-radius: 4px; }
+        #status { color: green; font-weight: bold; }
+    </style>
+</head>
+<body>
+    <h1>📄 Financial Document Intelligence Tool</h1>
+
+    <div class="section">
+        <h2>Upload Financial PDF</h2>
+        <input type="file" id="pdfFile" accept=".pdf">
+        <button onclick="uploadPDF()">Upload & Process</button>
+        <p id="status"></p>
+    </div>
+
+    <div class="section">
+        <h2>Semantic Search</h2>
+        <input type="text" id="searchQuery" placeholder="e.g. total expenses in March" style="width:60%">
+        <button onclick="searchDoc()">Search</button>
+        <div id="searchResults"></div>
+    </div>
+
+    <div class="section">
+        <h2>Anomaly Detection</h2>
+        <button onclick="detectAnomalies()">Run Anomaly Detection</button>
+        <div id="anomalyResults"></div>
+    </div>
+
+    <script>
+        async function uploadPDF() {
+            const file = document.getElementById('pdfFile').files[0];
+            if (!file) { alert('Select a PDF first'); return; }
+            const formData = new FormData();
+            formData.append('file', file);
+            document.getElementById('status').innerText = 'Processing...';
+            const res = await fetch('/upload', { method: 'POST', body: formData });
+            const data = await res.json();
+            document.getElementById('status').innerText = data.message || data.error;
+        }
+
+        async function searchDoc() {
+            const query = document.getElementById('searchQuery').value;
+            if (!query) { alert('Enter a search query'); return; }
+            const res = await fetch('/search', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ query })
+            });
+            const data = await res.json();
+            const div = document.getElementById('searchResults');
+            div.innerHTML = '';
+            if (data.error) { div.innerHTML = `<p style="color:red">${data.error}</p>`; return; }
+            data.results.forEach(r => {
+                div.innerHTML += `<div class="result"><b>Page ${r.page} | Score: ${r.score}</b><p>${r.content}</p></div>`;
+            });
+        }
+
+        async function detectAnomalies() {
+            const res = await fetch('/anomalies');
+            const data = await res.json();
+            const div = document.getElementById('anomalyResults');
+            div.innerHTML = '';
+            if (data.error) { div.innerHTML = `<p style="color:red">${data.error}</p>`; return; }
+            div.innerHTML = `<p>Total transactions found: ${data.total_transactions} | Normal: ${data.normal} | Flagged: ${data.anomalies.length}</p>`;
+            data.anomalies.forEach(a => {
+                div.innerHTML += `<div class="anomaly"><b>⚠️ Anomaly — Amount: ${a.amount}</b><p>${a.context}</p></div>`;
+            });
+        }
+    </script>
+</body>
+</html>
