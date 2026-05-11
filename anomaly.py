@@ -1,11 +1,13 @@
 import re
+from typing import Any
 
 import pandas as pd
 from sklearn.ensemble import IsolationForest
 
 
-def extract_transactions(chunks):
-    transactions = []
+def extract_transactions(chunks: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    """Extract currency-like values from chunk text."""
+    transactions: list[dict[str, Any]] = []
     amount_pattern = re.compile(r"[\$\u20B9]?\s*(\d{1,3}(?:,\d{3})*(?:\.\d{2})?)")
 
     for chunk in chunks:
@@ -24,7 +26,10 @@ def extract_transactions(chunks):
     return transactions
 
 
-def detect_anomalies(transactions):
+def detect_anomalies(
+    transactions: list[dict[str, Any]],
+) -> tuple[list[dict[str, Any]], list[dict[str, Any]]]:
+    """Split transactions into normal and flagged groups."""
     if len(transactions) < 5:
         return transactions, []
 

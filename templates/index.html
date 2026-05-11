@@ -2,81 +2,252 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Financial Document Intelligence Tool</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Financial Document Tool</title>
     <style>
-        body { font-family: Arial, sans-serif; max-width: 900px; margin: 40px auto; padding: 20px; background: #f4f4f4; }
-        h1 { color: #2c3e50; }
-        .section { background: white; padding: 20px; margin: 20px 0; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
-        input, button { padding: 10px; margin: 5px; border-radius: 4px; border: 1px solid #ccc; }
-        button { background: #2c3e50; color: white; border: none; cursor: pointer; }
-        button:hover { background: #34495e; }
-        .result { background: #ecf0f1; padding: 10px; margin: 5px 0; border-radius: 4px; }
-        .anomaly { background: #fadbd8; padding: 10px; margin: 5px 0; border-radius: 4px; }
-        #status { color: green; font-weight: bold; }
+        :root {
+            --bg: #f3efe7;
+            --panel: #fffdf8;
+            --ink: #1f2a37;
+            --muted: #556170;
+            --accent: #0f766e;
+            --accent-dark: #115e59;
+            --danger: #b42318;
+            --danger-bg: #fdecea;
+            --border: #d9d2c4;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            font-family: Georgia, "Times New Roman", serif;
+            background: linear-gradient(180deg, #efe7d8 0%, var(--bg) 100%);
+            color: var(--ink);
+        }
+
+        .page {
+            max-width: 980px;
+            margin: 0 auto;
+            padding: 40px 20px 60px;
+        }
+
+        .hero {
+            margin-bottom: 24px;
+        }
+
+        .hero h1 {
+            margin: 0 0 10px;
+            font-size: clamp(2rem, 5vw, 3.4rem);
+            line-height: 1;
+        }
+
+        .hero p {
+            margin: 0;
+            max-width: 720px;
+            color: var(--muted);
+            font-size: 1.05rem;
+        }
+
+        .panel {
+            background: var(--panel);
+            border: 1px solid var(--border);
+            border-radius: 18px;
+            padding: 22px;
+            margin-top: 18px;
+            box-shadow: 0 14px 30px rgba(43, 37, 28, 0.08);
+        }
+
+        h2 {
+            margin-top: 0;
+            font-size: 1.35rem;
+        }
+
+        .row {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+
+        input[type="text"],
+        input[type="file"] {
+            width: 100%;
+            padding: 12px 14px;
+            border-radius: 10px;
+            border: 1px solid var(--border);
+            background: #fff;
+            font: inherit;
+        }
+
+        input[type="text"] {
+            flex: 1 1 360px;
+        }
+
+        button {
+            border: 0;
+            border-radius: 10px;
+            padding: 12px 16px;
+            background: var(--accent);
+            color: white;
+            font: inherit;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background: var(--accent-dark);
+        }
+
+        .status {
+            margin-top: 12px;
+            color: var(--muted);
+        }
+
+        .result,
+        .anomaly {
+            border-radius: 12px;
+            padding: 14px;
+            margin-top: 12px;
+        }
+
+        .result {
+            background: #eef7f6;
+            border: 1px solid #c4e6e3;
+        }
+
+        .anomaly {
+            background: var(--danger-bg);
+            border: 1px solid #f2c7c4;
+        }
+
+        .error {
+            color: var(--danger);
+            margin-top: 12px;
+        }
+
+        .meta {
+            color: var(--muted);
+            font-size: 0.95rem;
+        }
     </style>
 </head>
 <body>
-    <h1>📄 Financial Document Intelligence Tool</h1>
+    <main class="page">
+        <section class="hero">
+            <p class="meta">Financial PDF search and anomaly review</p>
+            <h1>Financial Document Tool</h1>
+            <p>Upload a PDF, search it with embeddings, and surface unusual transaction amounts without leaving the browser.</p>
+        </section>
 
-    <div class="section">
-        <h2>Upload Financial PDF</h2>
-        <input type="file" id="pdfFile" accept=".pdf">
-        <button onclick="uploadPDF()">Upload & Process</button>
-        <p id="status"></p>
-    </div>
+        <section class="panel">
+            <h2>Upload PDF</h2>
+            <div class="row">
+                <input type="file" id="pdfFile" accept=".pdf,application/pdf">
+                <button onclick="uploadPDF()">Upload and Process</button>
+            </div>
+            <p id="status" class="status"></p>
+        </section>
 
-    <div class="section">
-        <h2>Semantic Search</h2>
-        <input type="text" id="searchQuery" placeholder="e.g. total expenses in March" style="width:60%">
-        <button onclick="searchDoc()">Search</button>
-        <div id="searchResults"></div>
-    </div>
+        <section class="panel">
+            <h2>Semantic Search</h2>
+            <div class="row">
+                <input type="text" id="searchQuery" placeholder="Try: vendor payments above 10,000">
+                <button onclick="searchDoc()">Search</button>
+            </div>
+            <div id="searchResults"></div>
+        </section>
 
-    <div class="section">
-        <h2>Anomaly Detection</h2>
-        <button onclick="detectAnomalies()">Run Anomaly Detection</button>
-        <div id="anomalyResults"></div>
-    </div>
+        <section class="panel">
+            <h2>Anomaly Detection</h2>
+            <button onclick="detectAnomalies()">Run anomaly detection</button>
+            <div id="anomalyResults"></div>
+        </section>
+    </main>
 
     <script>
+        function renderMessage(element, message, isError = false) {
+            element.innerHTML = message ? `<p class="${isError ? "error" : "status"}">${message}</p>` : "";
+        }
+
         async function uploadPDF() {
-            const file = document.getElementById('pdfFile').files[0];
-            if (!file) { alert('Select a PDF first'); return; }
+            const file = document.getElementById("pdfFile").files[0];
+            const status = document.getElementById("status");
+
+            if (!file) {
+                renderMessage(status, "Select a PDF first.", true);
+                return;
+            }
+
             const formData = new FormData();
-            formData.append('file', file);
-            document.getElementById('status').innerText = 'Processing...';
-            const res = await fetch('/upload', { method: 'POST', body: formData });
-            const data = await res.json();
-            document.getElementById('status').innerText = data.message || data.error;
+            formData.append("file", file);
+            status.textContent = "Processing document...";
+
+            const response = await fetch("/upload", {
+                method: "POST",
+                body: formData
+            });
+            const data = await response.json();
+            status.textContent = data.message || data.error || "Done";
+            status.className = data.error ? "error" : "status";
         }
 
         async function searchDoc() {
-            const query = document.getElementById('searchQuery').value;
-            if (!query) { alert('Enter a search query'); return; }
-            const res = await fetch('/search', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+            const query = document.getElementById("searchQuery").value.trim();
+            const results = document.getElementById("searchResults");
+
+            if (!query) {
+                renderMessage(results, "Enter a search query first.", true);
+                return;
+            }
+
+            const response = await fetch("/search", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ query })
             });
-            const data = await res.json();
-            const div = document.getElementById('searchResults');
-            div.innerHTML = '';
-            if (data.error) { div.innerHTML = `<p style="color:red">${data.error}</p>`; return; }
-            data.results.forEach(r => {
-                div.innerHTML += `<div class="result"><b>Page ${r.page} | Score: ${r.score}</b><p>${r.content}</p></div>`;
-            });
+            const data = await response.json();
+
+            if (data.error) {
+                renderMessage(results, data.error, true);
+                return;
+            }
+
+            results.innerHTML = data.results.map((item) => `
+                <div class="result">
+                    <strong>Page ${item.page}</strong>
+                    <span class="meta">Score: ${item.score}</span>
+                    <p>${item.content}</p>
+                </div>
+            `).join("");
         }
 
         async function detectAnomalies() {
-            const res = await fetch('/anomalies');
-            const data = await res.json();
-            const div = document.getElementById('anomalyResults');
-            div.innerHTML = '';
-            if (data.error) { div.innerHTML = `<p style="color:red">${data.error}</p>`; return; }
-            div.innerHTML = `<p>Total transactions found: ${data.total_transactions} | Normal: ${data.normal} | Flagged: ${data.anomalies.length}</p>`;
-            data.anomalies.forEach(a => {
-                div.innerHTML += `<div class="anomaly"><b>⚠️ Anomaly — Amount: ${a.amount}</b><p>${a.context}</p></div>`;
-            });
+            const results = document.getElementById("anomalyResults");
+            const response = await fetch("/anomalies");
+            const data = await response.json();
+
+            if (data.error) {
+                renderMessage(results, data.error, true);
+                return;
+            }
+
+            const summary = `
+                <p class="meta">
+                    Transactions found: ${data.total_transactions} |
+                    Normal: ${data.normal} |
+                    Flagged: ${data.anomalies.length}
+                </p>
+            `;
+
+            const anomalies = data.anomalies.map((item) => `
+                <div class="anomaly">
+                    <strong>Flagged amount: ${item.amount}</strong>
+                    <p>${item.context}</p>
+                </div>
+            `).join("");
+
+            results.innerHTML = summary + anomalies;
         }
     </script>
 </body>

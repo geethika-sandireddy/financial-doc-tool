@@ -8,5 +8,7 @@
 secrets.*
 __pycache__/
 .pycache_tmp/
+.pytest_cache/
+pytest-cache-files-*/
 *.pyc
 uploads/

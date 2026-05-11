@@ -1,38 +1,80 @@
 # Financial Document Tool
 
-Small Flask app for uploading a financial PDF, searching it with Gemini embeddings, and flagging unusual transaction amounts.
+Financial Document Tool is a small Flask app for exploring financial PDFs with semantic search and lightweight anomaly detection. Upload a PDF, turn its pages into searchable chunks with Gemini embeddings, and flag unusual transaction amounts with Isolation Forest.
 
 ## What it does
 
-- Extracts text from uploaded PDFs
-- Breaks the document into chunks for semantic search
-- Uses Gemini embeddings to find the most relevant passages for a query
-- Runs a simple anomaly check on detected transaction amounts
+- Uploads and reads financial PDF files
+- Breaks document text into retrieval-friendly chunks
+- Uses Gemini embeddings for semantic search
+- Extracts currency-like values from the document
+- Flags unusual amounts with unsupervised anomaly detection
+
+## Tech stack
+
+- Python
+- Flask
+- Google Gemini embeddings
+- scikit-learn
+- pandas
+- NumPy
+- pypdf
+
+## Project structure
+
+- [app.py](C:\Users\HP\OneDrive\Desktop\Git Projects\financial-doc-tool\app.py): Flask app and routes
+- [pdf_processor.py](C:\Users\HP\OneDrive\Desktop\Git Projects\financial-doc-tool\pdf_processor.py): PDF parsing and chunking
+- [embeddings.py](C:\Users\HP\OneDrive\Desktop\Git Projects\financial-doc-tool\embeddings.py): Gemini embedding helpers and similarity search
+- [anomaly.py](C:\Users\HP\OneDrive\Desktop\Git Projects\financial-doc-tool\anomaly.py): transaction extraction and anomaly detection
+- [templates/index.html](C:\Users\HP\OneDrive\Desktop\Git Projects\financial-doc-tool\templates\index.html): browser UI
 
 ## Setup
 
-1. Create and activate a virtual environment if you want one.
-2. Install the dependencies:
+1. Create a virtual environment if you want one.
+2. Install dependencies:
 
 ```bash
-pip install flask google-generativeai numpy pandas pypdf python-dotenv scikit-learn
+pip install -r requirements.txt
 ```
 
-3. Create a local `.env` file:
+3. Copy the example environment file and add your Gemini API key:
+
+```bash
+copy .env.example .env
+```
+
+4. Set your local values in `.env`:
 
 ```env
 GEMINI_API_KEY=your_api_key_here
+FLASK_SECRET_KEY=replace_me_for_local_use
+FLASK_DEBUG=true
 ```
 
-4. Start the app:
+5. Start the server:
 
 ```bash
 python app.py
 ```
 
-5. Open [http://127.0.0.1:5000](http://127.0.0.1:5000)
+6. Open [http://127.0.0.1:5000](http://127.0.0.1:5000)
 
 ## Notes
 
-- `.env` is ignored by Git and should stay local.
-- Uploaded files are stored in the `uploads/` folder.
+- The current app keeps document state in memory per browser session.
+- Uploaded files are removed after processing.
+- `.env` stays local and is ignored by Git.
+
+## Limitations
+
+- This is still a local single-process app, not a production deployment.
+- Session data resets when the server restarts.
+- Retrieval quality depends on PDF text extraction quality.
+
+## Testing
+
+Run the unit tests with:
+
+```bash
+pytest
+```
