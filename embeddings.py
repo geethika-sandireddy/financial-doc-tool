@@ -1,6 +1,6 @@
+import os
 import google.generativeai as genai
 import numpy as np
-import os
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -30,18 +30,23 @@ def cosine_similarity(vec1, vec2):
     return dot_product / magnitude
 
 def search_chunks(query, chunks, embeddings, top_k=5):
-    query_emb = get_query_embedding(query)
+    query_embedding = get_query_embedding(query)
     scores = []
-    for i, emb in enumerate(embeddings):
-        score = cosine_similarity(query_emb, emb)
-        scores.append((i, score))
+
+    for index, embedding in enumerate(embeddings):
+        score = cosine_similarity(query_embedding, embedding)
+        scores.append((index, score))
+
     scores.sort(key=lambda x: x[1], reverse=True)
+
     results = []
-    for i, score in scores[:top_k]:
+
+    for index, score in scores[:top_k]:
         results.append({
-            'content': chunks[i]['content'],
-            'page': chunks[i]['page'],
-            'source': chunks[i]['source'],
+            'content': chunks[index]['content'],
+            'page': chunks[index]['page'],
+            'source': chunks[index]['source'],
             'score': round(float(score), 4)
         })
+
     return results

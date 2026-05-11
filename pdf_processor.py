@@ -1,10 +1,11 @@
-import pypdf
 import os
+import pypdf
 
 def extract_text_from_pdf(pdf_path):
     text_chunks = []
     with open(pdf_path, 'rb') as file:
         reader = pypdf.PdfReader(file)
+
         for page_num, page in enumerate(reader.pages):
             text = page.extract_text()
             if text.strip():
@@ -22,13 +23,17 @@ def chunk_text(text, chunk_size=500):
     chunks = []
     current_chunk = []
     current_size = 0
+
     for word in words:
         current_chunk.append(word)
         current_size += len(word)
+
         if current_size >= chunk_size:
             chunks.append(' '.join(current_chunk))
             current_chunk = []
             current_size = 0
+
     if current_chunk:
         chunks.append(' '.join(current_chunk))
+
     return chunks

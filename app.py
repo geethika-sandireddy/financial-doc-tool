@@ -1,17 +1,15 @@
-from flask import Flask, request, jsonify, render_template
-from pdf_processor import extract_text_from_pdf
-from embeddings import get_embedding, search_chunks
-from anomaly import extract_transactions, detect_anomalies
 import os
-from dotenv import load_dotenv
-import google.generativeai as genai
+from flask import Flask, jsonify, render_template, request
+from werkzeug.utils import secure_filename
 
-load_dotenv()
-genai.configure(api_key=os.getenv("GEMINI_API_KEY"))
+from anomaly import detect_anomalies, extract_transactions
+from embeddings import get_embedding, search_chunks
+from pdf_processor import extract_text_from_pdf
 
 app = Flask(__name__)
-UPLOAD_FOLDER = 'uploads'
+UPLOAD_FOLDER = "uploads"
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
+os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
 chunks_store = []
 embeddings_store = []
@@ -25,23 +23,29 @@ def upload():
     global chunks_store, embeddings_store
     if 'file' not in request.files:
         return jsonify({'error': 'No file uploaded'}), 400
+
     file = request.files['file']
     if file.filename == '':
         return jsonify({'error': 'No file selected'}), 400
-    filepath = os.path.join(app.config['UPLOAD_FOLDER'], file.filename)
+
+    filename = secure_filename(file.filename)
+    filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
     file.save(filepath)
+
     chunks_store = extract_text_from_pdf(filepath)
     embeddings_store = [get_embedding(chunk['content']) for chunk in chunks_store]
-    return jsonify({'message': f'Processed {len(chunks_store)} chunks from {file.filename}'})
+    return jsonify({'message': f'Processed {len(chunks_store)} chunks from {filename}'})
 
 @app.route('/search', methods=['POST'])
 def search():
-    data = request.json
+    data = request.get_json(silent=True) or {}
     query = data.get('query', '')
+
     if not query:
         return jsonify({'error': 'No query provided'}), 400
     if not chunks_store:
         return jsonify({'error': 'No document uploaded yet'}), 400
+
     results = search_chunks(query, chunks_store, embeddings_store)
     return jsonify({'results': results})
 
