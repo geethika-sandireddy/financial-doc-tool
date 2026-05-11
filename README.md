@@ -22,11 +22,11 @@ Financial Document Tool is a small Flask app for exploring financial PDFs with s
 
 ## Project structure
 
-- [app.py](C:\Users\HP\OneDrive\Desktop\Git Projects\financial-doc-tool\app.py): Flask app and routes
-- [pdf_processor.py](C:\Users\HP\OneDrive\Desktop\Git Projects\financial-doc-tool\pdf_processor.py): PDF parsing and chunking
-- [embeddings.py](C:\Users\HP\OneDrive\Desktop\Git Projects\financial-doc-tool\embeddings.py): Gemini embedding helpers and similarity search
-- [anomaly.py](C:\Users\HP\OneDrive\Desktop\Git Projects\financial-doc-tool\anomaly.py): transaction extraction and anomaly detection
-- [templates/index.html](C:\Users\HP\OneDrive\Desktop\Git Projects\financial-doc-tool\templates\index.html): browser UI
+- `app.py`: Flask app and routes
+- `pdf_processor.py`: PDF parsing and chunking
+- `embeddings.py`: Gemini embedding helpers and similarity search
+- `anomaly.py`: transaction extraction and anomaly detection
+- `templates/index.html`: browser UI
 
 ## Setup
 
@@ -58,6 +58,11 @@ python app.py
 ```
 
 6. Open [http://127.0.0.1:5000](http://127.0.0.1:5000)
+
+## Why these choices
+
+- Gemini embeddings keep the search flow simple while still giving strong semantic matching for natural language queries.
+- Isolation Forest is a reasonable fit here because anomaly detection is unsupervised and the app does not assume labeled fraud data.
 
 ## Notes
 
