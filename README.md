@@ -26,11 +26,6 @@ graph TD
     B --> E(core/anomaly.py<br><small>regex extraction<br>IsolationForest / tunable contamination</small>)
     
     C --> F(core/vector_store.py<br>FAISS IndexFlatIP<br><small>exact cosine search<br>27-30x faster than standard Python loop at 10K+ chunks</small>)
-
-    %% Styling for crisp look
-    classDef default fill:#fff,stroke:#333,stroke-width:1px;
-    classDef highlight fill:#f9f9f9,stroke:#222,stroke-width:2px;
-    class A,B highlight;
     
 
 ## What it does
