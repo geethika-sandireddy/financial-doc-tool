@@ -18,28 +18,22 @@ a guess. Full numbers in [`benchmarks/results.md`](benchmarks/results.md).
 
 ## Architecture
 
-```
-                  ┌───────────────────────┐
-  browser / curl ▶│  Flask (api/routes.py) │
-                  │  session-scoped state  │
-                  └───────────┬───────────┘
-                              │
-        ┌─────────────────────┼─────────────────────┐
-        ▼                     ▼                     ▼
- core/pdf_processor.py  core/embeddings.py    core/anomaly.py
- parse + chunk PDF      batched Gemini calls   regex extraction +
- (page-count guard,     → google-genai SDK     IsolationForest,
- corrupted-file guard)                          tunable contamination
-        │                     │
-        └──────────┬──────────┘
-                    ▼
-          core/vector_store.py
-          FAISS IndexFlatIP
-          (exact cosine search,
-           27-30x faster than the
-           original Python loop
-           at 10K+ chunks)
-```
+graph TD
+    Client[Browser / cURL] --> Flask[Flask api/routes.py<br>session-scoped state]
+    
+    Flask --> PP[core/pdf_processor.py<br>• Parse + chunk PDF<br>• Page-count guard<br>• Corrupted-file guard]
+    Flask --> EM[core/embeddings.py<br>• Batched Gemini calls<br>• google-genai SDK]
+    Flask --> AN[core/anomaly.py<br>• Regex extraction<br>• IsolationForest<br>• Tunable contamination]
+    
+    PP --> VS[core/vector_store.py<br>FAISS IndexFlatIP exact cosine search<br>27-30x faster than Python loop at 10K+ chunks]
+
+    style Client fill:#f9f9f9,stroke:#333,stroke-width:1px
+    style Flask fill:#edf2f7,stroke:#4a5568,stroke-width:2px
+    style PP fill:#fff,stroke:#cbd5e0,stroke-width:1px
+    style EM fill:#fff,stroke:#cbd5e0,stroke-width:1px
+    style AN fill:#fff,stroke:#cbd5e0,stroke-width:1px
+    style VS fill:#edf2f7,stroke:#4a5568,stroke-width:1px
+
 
 ## What it does
 
