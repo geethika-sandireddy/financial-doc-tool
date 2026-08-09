@@ -19,21 +19,19 @@ a guess. Full numbers in [`benchmarks/results.md`](benchmarks/results.md).
 ## Architecture
 
 graph TD
-    Client[Browser / cURL] --> Flask[Flask api/routes.py<br>session-scoped state]
+    A[Browser / cURL] --> B(Flask api/routes.py<br>Session-Scoped State)
     
-    Flask --> PP[core/pdf_processor.py<br>• Parse + chunk PDF<br>• Page-count guard<br>• Corrupted-file guard]
-    Flask --> EM[core/embeddings.py<br>• Batched Gemini calls<br>• google-genai SDK]
-    Flask --> AN[core/anomaly.py<br>• Regex extraction<br>• IsolationForest<br>• Tunable contamination]
+    B --> C(core/pdf_processor.py<br><small>parse + chunk PDF<br>page-count guard / corrupted-file guard</small>)
+    B --> D(core/embeddings.py<br><small>batched Gemini calls<br>google-genai SDK</small>)
+    B --> E(core/anomaly.py<br><small>regex extraction<br>IsolationForest / tunable contamination</small>)
     
-    PP --> VS[core/vector_store.py<br>FAISS IndexFlatIP exact cosine search<br>27-30x faster than Python loop at 10K+ chunks]
+    C --> F(core/vector_store.py<br>FAISS IndexFlatIP<br><small>exact cosine search<br>27-30x faster than standard Python loop at 10K+ chunks</small>)
 
-    style Client fill:#f9f9f9,stroke:#333,stroke-width:1px
-    style Flask fill:#edf2f7,stroke:#4a5568,stroke-width:2px
-    style PP fill:#fff,stroke:#cbd5e0,stroke-width:1px
-    style EM fill:#fff,stroke:#cbd5e0,stroke-width:1px
-    style AN fill:#fff,stroke:#cbd5e0,stroke-width:1px
-    style VS fill:#edf2f7,stroke:#4a5568,stroke-width:1px
-
+    %% Styling for crisp look
+    classDef default fill:#fff,stroke:#333,stroke-width:1px;
+    classDef highlight fill:#f9f9f9,stroke:#222,stroke-width:2px;
+    class A,B highlight;
+    
 
 ## What it does
 
