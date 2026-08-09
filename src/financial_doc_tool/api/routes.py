@@ -1,26 +1,31 @@
-import os
+"""HTTP layer only. No business logic lives here -- every route delegates to
+financial_doc_tool.core modules and translates results/exceptions into JSON
+responses. This split is what makes core/ unit-testable without spinning up
+Flask at all (see tests/unit/) and lets tests/integration/ exercise the full
+upload -> search -> anomaly flow through real HTTP requests.
+"""
+
+from __future__ import annotations
+
 from pathlib import Path
 from typing import Any
 from uuid import uuid4
 
-from dotenv import load_dotenv
-from flask import Flask, jsonify, render_template, request, session
+from flask import Blueprint, Response, jsonify, render_template, request, session
 from werkzeug.utils import secure_filename
 
-from anomaly import detect_anomalies, extract_transactions
-from embeddings import EmbeddingServiceError, get_embedding, search_chunks
-from pdf_processor import extract_text_from_pdf
+from financial_doc_tool.config import settings
+from financial_doc_tool.core.anomaly import detect_anomalies, extract_transactions
+from financial_doc_tool.core.embeddings import get_embeddings, get_query_embedding
+from financial_doc_tool.core.pdf_processor import extract_text_from_pdf
+from financial_doc_tool.core.vector_store import VectorStore
+from financial_doc_tool.exceptions import EmbeddingServiceError, PdfProcessingError
 
-load_dotenv()
+bp = Blueprint("financial_doc_tool", __name__)
 
-app = Flask(__name__)
-app.config["UPLOAD_FOLDER"] = "uploads"
-app.config["MAX_CONTENT_LENGTH"] = 10 * 1024 * 1024
-app.secret_key = os.getenv("FLASK_SECRET_KEY", "dev-secret-key")
-
-UPLOAD_FOLDER = Path(app.config["UPLOAD_FOLDER"])
-UPLOAD_FOLDER.mkdir(exist_ok=True)
 ALLOWED_EXTENSIONS = {".pdf"}
+# Session state, in-process only -- see README "Limitations" for what this
+# means for multi-instance deployments.
 document_store: dict[str, dict[str, Any]] = {}
 
 
@@ -43,13 +48,13 @@ def allowed_file(filename: str) -> bool:
     return Path(filename).suffix.lower() in ALLOWED_EXTENSIONS
 
 
-@app.route("/")
+@bp.route("/")
 def index() -> str:
     return render_template("index.html")
 
 
-@app.route("/upload", methods=["POST"])
-def upload():
+@bp.route("/upload", methods=["POST"])
+def upload() -> tuple[Response, int] | Response:
     if "file" not in request.files:
         return jsonify({"error": "No file uploaded"}), 400
 
@@ -61,29 +66,28 @@ def upload():
 
     filename = secure_filename(file.filename)
     session_id = get_session_id()
-    filepath = UPLOAD_FOLDER / f"{session_id}_{filename}"
+    settings.upload_folder.mkdir(exist_ok=True)
+    filepath = settings.upload_folder / f"{session_id}_{filename}"
     file.save(filepath)
 
     try:
         chunks = extract_text_from_pdf(str(filepath))
-        embeddings = [get_embedding(chunk["content"]) for chunk in chunks]
+        embeddings = get_embeddings([chunk["content"] for chunk in chunks])
+    except PdfProcessingError as exc:
+        return jsonify({"error": str(exc)}), 422
     except EmbeddingServiceError as exc:
         return jsonify({"error": str(exc)}), 502
-    except Exception:
-        return jsonify({"error": "Could not process the uploaded PDF"}), 500
     finally:
         filepath.unlink(missing_ok=True)
 
-    document_store[session_id] = {
-        "filename": filename,
-        "chunks": chunks,
-        "embeddings": embeddings,
-    }
+    store = VectorStore()
+    store.build(chunks, embeddings)
+    document_store[session_id] = {"filename": filename, "store": store}
     return jsonify({"message": f"Processed {len(chunks)} chunks from {filename}"})
 
 
-@app.route("/search", methods=["POST"])
-def search():
+@bp.route("/search", methods=["POST"])
+def search() -> tuple[Response, int] | Response:
     data = request.get_json(silent=True) or {}
     query = str(data.get("query", "")).strip()
     if not query:
@@ -94,20 +98,21 @@ def search():
         return jsonify({"error": "No document uploaded yet"}), 400
 
     try:
-        results = search_chunks(query, document["chunks"], document["embeddings"])
+        query_embedding = get_query_embedding(query)
     except EmbeddingServiceError as exc:
         return jsonify({"error": str(exc)}), 502
 
+    results = document["store"].search(query_embedding, top_k=settings.search_top_k)
     return jsonify({"results": results})
 
 
-@app.route("/anomalies", methods=["GET"])
-def anomalies():
+@bp.route("/anomalies", methods=["GET"])
+def anomalies() -> tuple[Response, int] | Response:
     document = get_session_document()
     if document is None:
         return jsonify({"error": "No document uploaded yet"}), 400
 
-    transactions = extract_transactions(document["chunks"])
+    transactions = extract_transactions(document["store"].chunks)
     normal, flagged = detect_anomalies(transactions)
     return jsonify(
         {
@@ -116,8 +121,3 @@ def anomalies():
             "anomalies": flagged,
         }
     )
-
-
-if __name__ == "__main__":
-    debug_mode = os.getenv("FLASK_DEBUG", "false").lower() == "true"
-    app.run(debug=debug_mode)

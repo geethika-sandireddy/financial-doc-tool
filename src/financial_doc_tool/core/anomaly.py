@@ -1,17 +1,22 @@
+from __future__ import annotations
+
 import re
 from typing import Any
 
 import pandas as pd
 from sklearn.ensemble import IsolationForest
 
+from financial_doc_tool.config import settings
+
+_AMOUNT_PATTERN = re.compile(r"[\$\u20B9]?\s*(\d{1,3}(?:,\d{3})*(?:\.\d{2})?)")
+
 
 def extract_transactions(chunks: list[dict[str, Any]]) -> list[dict[str, Any]]:
     """Extract currency-like values from chunk text."""
     transactions: list[dict[str, Any]] = []
-    amount_pattern = re.compile(r"[\$\u20B9]?\s*(\d{1,3}(?:,\d{3})*(?:\.\d{2})?)")
 
     for chunk in chunks:
-        amounts = amount_pattern.findall(chunk["content"])
+        amounts = _AMOUNT_PATTERN.findall(chunk["content"])
         for amount in amounts:
             value = float(amount.replace(",", ""))
             if value > 0:
@@ -28,14 +33,23 @@ def extract_transactions(chunks: list[dict[str, Any]]) -> list[dict[str, Any]]:
 
 def detect_anomalies(
     transactions: list[dict[str, Any]],
+    contamination: float | None = None,
 ) -> tuple[list[dict[str, Any]], list[dict[str, Any]]]:
-    """Split transactions into normal and flagged groups."""
+    """Split transactions into normal and flagged groups via IsolationForest.
+
+    contamination defaults to settings.anomaly_contamination (previously a
+    hardcoded 0.1 with no stated justification). See benchmarks/results.md
+    for the precision/recall this default achieves against a labeled
+    synthetic evaluation set, and tests/performance/test_anomaly_eval.py for
+    the evaluation harness itself.
+    """
+    contamination = contamination if contamination is not None else settings.anomaly_contamination
     if len(transactions) < 5:
         return transactions, []
 
     frame = pd.DataFrame(transactions)
     amounts = frame[["amount"]].values
-    model = IsolationForest(contamination=0.1, random_state=42)
+    model = IsolationForest(contamination=contamination, random_state=42)
 
     frame["anomaly"] = model.fit_predict(amounts)
 
