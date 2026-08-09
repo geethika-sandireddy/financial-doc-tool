@@ -18,14 +18,21 @@ a guess. Full numbers in [`benchmarks/results.md`](benchmarks/results.md).
 
 ## Architecture
 
-graph TD
-    A[Browser / cURL] --> B(Flask api/routes.py<br>Session-Scoped State)
+
+
+```mermaid
+flowchart TD
+    A["Browser / cURL"] --> B["Flask api/routes.py\nSession-Scoped State"]
     
-    B --> C(core/pdf_processor.py<br><small>parse + chunk PDF<br>page-count guard / corrupted-file guard</small>)
-    B --> D(core/embeddings.py<br><small>batched Gemini calls<br>google-genai SDK</small>)
-    B --> E(core/anomaly.py<br><small>regex extraction<br>IsolationForest / tunable contamination</small>)
+    B --> C["core/pdf_processor.py\nparse + chunk PDF\npage-count / corrupted guard"]
+    B --> D["core/embeddings.py\nbatched Gemini calls\ngoogle-genai SDK"]
+    B --> E["core/anomaly.py\nregex extraction\nIsolationForest / tunable contamination"]
     
-    C --> F(core/vector_store.py<br>FAISS IndexFlatIP<br><small>exact cosine search<br>27-30x faster than standard Python loop at 10K+ chunks</small>)
+    C --> F["core/vector_store.py\nFAISS IndexFlatIP\nexact cosine search\n27-30x faster loop at 10K+ chunks"]
+```
+
+
+
     
 
 ## What it does
