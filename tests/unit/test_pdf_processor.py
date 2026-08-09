@@ -1,4 +1,4 @@
-from pdf_processor import chunk_text
+from financial_doc_tool.core.pdf_processor import chunk_text
 
 
 def test_chunk_text_keeps_short_text_together():

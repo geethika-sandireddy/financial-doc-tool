@@ -1,4 +1,4 @@
-from anomaly import detect_anomalies, extract_transactions
+from financial_doc_tool.core.anomaly import detect_anomalies, extract_transactions
 
 
 def test_extract_transactions_parses_currency_values():
