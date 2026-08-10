@@ -14,7 +14,7 @@ scan at 10K-50K chunks, and the anomaly detector's default threshold is
 chosen from a precision/recall sweep against a labeled evaluation set, not
 a guess. Full numbers in [`benchmarks/results.md`](benchmarks/results.md).
 
-> No live demo is deployed yet — see [Deployment](#deployment) for how to run it with Docker.
+**Live demo:** [financial-doc-tool.onrender.com](https://financial-doc-tool.onrender.com) — note this is a free-tier instance, so it sleeps after inactivity and the first request may take 30-60s to wake up.
 
 ## Architecture
 
