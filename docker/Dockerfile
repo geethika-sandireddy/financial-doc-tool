@@ -15,6 +15,10 @@ RUN pip install --no-cache-dir .
 
 RUN mkdir -p uploads
 
+# Default port for local runs / platforms (e.g. HF Spaces) that expect a
+# fixed port. Render and similar platforms inject their own PORT at runtime,
+# which the shell-form CMD below picks up automatically.
+ENV PORT=7860
 EXPOSE 7860
 
-CMD ["gunicorn", "financial_doc_tool.api.app:create_app()", "--bind", "0.0.0.0:7860", "--workers", "2", "--timeout", "120"]
+CMD gunicorn "financial_doc_tool.api.app:create_app()" --bind 0.0.0.0:${PORT} --workers 2 --timeout 120
