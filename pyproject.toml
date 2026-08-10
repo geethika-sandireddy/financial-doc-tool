@@ -3,16 +3,16 @@ name = "financial-doc-tool"
 version = "0.2.0"
 description = "Semantic search and unsupervised anomaly detection over financial PDF documents."
 readme = "README.md"
-requires-python = ">=3.11"
+requires-python = ">=3.10"
 license = { file = "LICENSE" }
 dependencies = [
     "flask==3.1.3",
     "google-genai==2.17.0",
-    "numpy==2.5.1",
-    "pandas==3.0.1",
+    "numpy==2.2.6",
+    "pandas==2.3.3",
     "pypdf==6.4.2",
     "python-dotenv==1.2.2",
-    "scikit-learn==1.8.0",
+    "scikit-learn==1.7.2",
     "faiss-cpu==1.15.0",
     "gunicorn==23.0.0",
 ]
@@ -38,7 +38,7 @@ pythonpath = ["src"]
 
 [tool.ruff]
 line-length = 100
-target-version = "py311"
+target-version = "py310"
 
 [tool.ruff.lint]
 select = ["E", "F", "I", "UP", "B", "SIM"]
