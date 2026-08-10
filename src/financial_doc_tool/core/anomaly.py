@@ -8,7 +8,14 @@ from sklearn.ensemble import IsolationForest
 
 from financial_doc_tool.config import settings
 
-_AMOUNT_PATTERN = re.compile(r"[\$\u20B9]?\s*(\d{1,3}(?:,\d{3})*(?:\.\d{2})?)")
+# Matches amounts either comma-grouped ("$12,500.00") or plain digit runs
+# ("$12500.00"). The original pattern only matched \d{1,3} with mandatory
+# comma-grouping beyond that, which silently truncated any un-grouped
+# amount over 3 digits (e.g. "$12500.00" parsed as "125" + a bogus "00.00")
+# -- a real accuracy bug, since plain-digit amounts without thousands
+# separators are common in exported financial text. See
+# tests/unit/test_anomaly.py::test_extract_transactions_handles_ungrouped_large_amounts.
+_AMOUNT_PATTERN = re.compile(r"[\$\u20B9]?\s*(\d{1,3}(?:,\d{3})+(?:\.\d{2})?|\d+(?:\.\d{2})?)")
 
 
 def extract_transactions(chunks: list[dict[str, Any]]) -> list[dict[str, Any]]:

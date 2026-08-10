@@ -13,6 +13,18 @@ def test_extract_transactions_parses_currency_values():
     assert transactions[0]["page"] == 1
 
 
+def test_extract_transactions_handles_ungrouped_large_amounts():
+    """Regression test: the original regex only matched \\d{1,3} unless
+    comma-grouped, so '$12500.00' (no thousands separator) was silently
+    truncated to 125.0 + a bogus 00.00, instead of being read as 12500.0.
+    Real financial text frequently omits thousands separators."""
+    chunks = [{"content": "Paid $12500.00 to Vendor E, flagged for review", "page": 1}]
+
+    transactions = extract_transactions(chunks)
+
+    assert [item["amount"] for item in transactions] == [12500.00]
+
+
 def test_detect_anomalies_returns_empty_flags_for_small_input():
     transactions = [
         {"amount": 100.0, "page": 1, "context": "a"},
