@@ -7,14 +7,14 @@
 Detects anomalous transactions in financial PDFs by combining semantic
 search (FAISS + Gemini embeddings) with unsupervised outlier detection
 (Isolation Forest) over amounts extracted from unstructured document
-text — not just a PDF chatbot.
+text - not just a PDF chatbot.
 
 **Measured, not claimed:** FAISS search is 27-30x faster than a brute-force
 scan at 10K-50K chunks, and the anomaly detector's default threshold is
 chosen from a precision/recall sweep against a labeled evaluation set, not
 a guess. Full numbers in [`benchmarks/results.md`](benchmarks/results.md).
 
-**Live demo:** [financial-doc-tool.onrender.com](https://financial-doc-tool.onrender.com) — note this is a free-tier instance, so it sleeps after inactivity and the first request may take 30-60s to wake up.
+**Live demo:** [financial-doc-tool.onrender.com](https://financial-doc-tool.onrender.com) - note this is a free-tier instance, so it sleeps after inactivity and the first request may take 30-60s to wake up.
 
 ## Architecture
 
@@ -58,7 +58,7 @@ flowchart TD
 src/financial_doc_tool/
 ├── api/
 │   ├── app.py          # Flask app factory
-│   └── routes.py        # HTTP layer only — delegates to core/
+│   └── routes.py        # HTTP layer only - delegates to core/
 ├── core/
 │   ├── pdf_processor.py # parsing + chunking
 │   ├── embeddings.py    # batched Gemini embedding calls
@@ -116,19 +116,19 @@ docker run -p 7860:7860 --env-file .env financial-doc-tool
 ```
 
 The image runs on gunicorn (2 workers) rather than the Flask dev server.
-Compatible with Hugging Face Spaces (Docker SDK) or any container host —
+Compatible with Hugging Face Spaces (Docker SDK) or any container host -
 neither is currently deployed for this project.
 
 ## Design notes
 
 - Gemini embeddings keep the search flow simple while giving strong semantic matching for natural-language queries; batching (see `core/embeddings.py`) turns N sequential API calls into `ceil(N / batch_size)`.
-- FAISS's `IndexFlatIP` over L2-normalized vectors is mathematically identical to brute-force cosine similarity — no accuracy is traded for the speedup, only the Python-loop overhead is removed. See `benchmarks/results.md` for the measured numbers at different corpus sizes.
+- FAISS's `IndexFlatIP` over L2-normalized vectors is mathematically identical to brute-force cosine similarity - no accuracy is traded for the speedup, only the Python-loop overhead is removed. See `benchmarks/results.md` for the measured numbers at different corpus sizes.
 - Isolation Forest is a reasonable fit because anomaly detection here is unsupervised and the app doesn't assume labeled fraud data. Its `contamination` parameter is configurable via `.env` rather than hardcoded, and the default (0.1) is chosen from a precision/recall sweep in `benchmarks/results.md`, not an arbitrary guess.
 
 ## Limitations
 
 - Session/document state is held in-process (per-session, in-memory); it does not survive a restart or scale across multiple app instances. A production deployment would move this to Redis or Postgres.
-- The anomaly-detection evaluation uses synthetic data with one outlier "shape" (large-magnitude injected values) — see the caveat in `benchmarks/results.md`. It validates the detector's math and parameter choice; it is not a claim about accuracy on real, messy financial documents, where outliers can be subtler.
+- The anomaly-detection evaluation uses synthetic data with one outlier "shape" (large-magnitude injected values) - see the caveat in `benchmarks/results.md`. It validates the detector's math and parameter choice; it is not a claim about accuracy on real, messy financial documents, where outliers can be subtler.
 - Retrieval quality depends on PDF text-extraction quality; scanned/image-only PDFs with no text layer will not chunk usefully.
 - Uploaded files are deleted from disk immediately after processing; only derived chunks/embeddings/vector index are kept in memory for the session.
 
